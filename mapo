@@ -1,0 +1,41 @@
+#!/bin/sh
+
+. "$HOME/libs/error.sh"
+
+name="mapo"
+path="/tmp/psmolak/"
+input="$path/$name.fifo"
+
+[ ! -e "$path" ] && mkdir -p "$path"
+[ ! -e "$input" ] && mkfifo "$input"
+
+while true; do
+  echo 'clock' "$(date +%H:%M:%S)"
+  sleep 1
+done > "$input" &
+
+while true; do
+  echo 'tx' "$(cat /sys/class/net/wlp2s0/statistics/tx_bytes)"
+  echo 'rx' "$(cat /sys/class/net/wlp2s0/statistics/rx_bytes)"
+  sleep 10
+done > "$input" &
+
+while read -r message
+do
+  case "$message" in
+    clock*) clock=${message#clock } ;;
+    tx*) tx=${message#tx } ;;
+    rx*) rx=${message#rx } ;;
+    info*) info=${message#info } ;;
+    *) ;;
+  esac
+
+  left=""
+  center="${info}"
+  network="$((tx / 1000 / 1000))M / $((rx / 1000 / 1000))M"
+  right="$network    ${clock:---/--}    "
+
+  echo "%{l}${left}%{c}${center}%{r}${right}"
+done < "$input" | lemonbar -d -B'#00FFFFFF' -F'#FFBABABA' -g1600x30 -f 'Ubuntu:size=11'
+
+# vim: ft=sh

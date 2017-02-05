@@ -1,0 +1,100 @@
+#!/bin/sh
+
+die() {
+	[ -z "$@" ] || echo "$@"
+	exit 1
+}
+
+usage() {
+	cat << EOF
+
+Usage: ursa --cmd COMMAND --size SIZE --position POSITION [--title TITLE] [--name NAME]
+
+ursa opens urxvt with specified size at specified position.
+Everething passed to stdin is passed as cmd's stdin. Same for stdin.
+
+  ex. find ~/ -type f | ursa --size 40 --position left --cmd 'fzf' | vim
+
+	--size SIZE
+	Sets the window size to SIZE % of your desktop high or width
+
+	--position POSITION
+	Sets the position to which stick the window
+	Valid values are left|right|up|down
+
+	--tile TITLE
+	When used, TITLE is passed to urxvt's -title (WM_NAME)
+
+	--name NAME
+	When used, NAME is passed to urxvt's -name (WM_CLASS[0]) aka instance
+	If used, file .Xresources.d/urxvt.NAME is set as XENVIRONMENT if available
+
+	--cmd COMMAND
+	COMMAND is passed as urxvt's -e argument
+
+	For all long options there are shorthands (first letter) ie. --cmd -> -c
+	
+EOF
+}
+
+while [ $# -gt 0 ]
+do
+
+	case "$1" in
+		--size|-s) size="$2" ;;
+		--position|-p) position="$2" ;;
+		--title|-t) title="$2" ;;
+		--name|-n) name="$2" ;;
+		--cmd|-c) cmd="$2" ;;
+		--help|-h) usage; die ;;
+		*) die "Invalid argument $1" ;;
+	esac
+	shift 2
+
+done
+
+case "$position" in
+	right) 
+		width=$(( 1600 * size / 100 ))
+		height=900
+		x=$(( 1600 - width))
+		y=0
+		;;
+
+	left)
+		width=$(( 1600 * size / 100 ))
+		height=900
+		x=0
+		y=0
+		;;
+
+	up)
+		width=1600
+		height=$(( 900 * size / 100 ))
+		x=0
+		y=0
+		;;
+
+	down) 
+		width=1600
+		height=$(( 900 * size / 100 ))
+		x=0
+		y=$(( 900 - height ))
+		;;
+
+	*) die "Invalid position $position" ;;
+esac
+
+XENVIRONMENT="$HOME/.Xresources.d/urxvt.${name}"	
+[ -r "$XENVIRONMENT" ] && export XENVIRONMENT
+
+# bind file descriptors properly so that input and output are passed correctly
+execute="exec </proc/$$/fd/0 >/proc/$$/fd/1"
+# set the window geometry
+execute="${execute}; xdo move -x $x -y $y; xdo resize -w $width -h $height"
+# append the actual command passed as --cmd argument
+execute="${execute}; $cmd"
+
+urxvt \
+	-name "${name:-ursa}" \
+	-e sh -c "${execute}"

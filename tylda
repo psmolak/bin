@@ -1,0 +1,50 @@
+#!/bin/sh
+
+die() {
+	[ -z "$@" ] || echo "$@"
+	exit 1
+}
+
+usage() {
+	cat << EOF
+usage: tylda [--daemon|-d]
+
+If run as daemon, makes sure only one instance of tylda is running.
+If run without parameters, toggles tylda's visibility.
+
+	--daemon | -d
+	Run tylda in daemon mode.
+EOF
+}
+
+daemon() {
+	# make sure there is only one tylda instance runnning
+	xdo id -n tylda >/dev/null && die "tylda is already running"
+
+	XENVIRONMENT="$HOME/.Xresources.d/urxvt.tylda"
+	[ -r "$XENVIRONMENT" ] && export XENVIRONMENT
+
+	while true
+	do
+		urxvt -name tylda -e sh -c "xdo hide; $SHELL" || break
+	done
+}
+
+toggle() {
+	wid="$(xdo id -n tylda)" || die "There is no tylda instance running"
+	mapw -t "$wid"
+}
+
+[ $# -eq 0 ] && { toggle; exit 0; }
+
+while [ $# -gt 0 ]
+do
+
+	case "$1" in
+		--daemon|-d) daemon ;;
+		--help|-h) usage; exit 0 ;;
+		*) die "Invalid argument $1" ;;
+	esac
+	shift 1
+
+done

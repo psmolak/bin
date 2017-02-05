@@ -1,0 +1,19 @@
+#!/bin/sh
+
+echo " --- Primary selection"
+xsel --primary --output
+echo
+echo " --- "
+echo
+
+echo " --- Secondary selection"
+xsel --secondary --output
+echo
+echo " --- "
+echo
+
+echo " --- Clipboard selection"
+xsel --clipboard --output
+echo
+echo " --- "
+echo

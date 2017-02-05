@@ -1,0 +1,11 @@
+#!/bin/sh
+
+[ "$#" -lt 2 ] && { echo "INTERVAL and CMD required"; exit 1; }
+deelay="$1"
+shift 1
+
+while sleep "$deelay"
+do
+	eval $@
+done
+

@@ -1,4 +1,0 @@
-#!/bin/sh
-
-
-find -L ~/dotfiles/ -type f | ursa -p down -s 35 -n fzfu -c 'fzf' | vim

@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+
+config="$HOME/.gitconfig.local"
+
+[ -e "$config" ] || touch "$config"
+
+read -p "Enter Git username: [Paweł Smolak] " username
+read -p "Enter Git email: [smolak.paul@gmail.com] " email
+
+cat << EOF >> .gitconfig
+[user]
+    name = ${username:="Paweł Smolak"}
+    email = ${email:="smolak.paul@gmail.com"}
+EOF
+
+cat << EOF >> "$config"
+[includeIf "gitdir:$(pwd)/"]
+    path = $(pwd)/.gitconfig
+EOF
+
+echo "Local git configuration set for $(pwd)."
